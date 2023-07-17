@@ -4,7 +4,15 @@ using UnityEngine;
 
 public class LifeCycle : MonoBehaviour
 {
-    public float speed = 0.1f;
+    public float speed = 5f;
+    public GameObject bullet;
+    public Transform shootTransform;
+    public float shootIntv = 0.05f;
+
+    private float lastShootTime = 0;
+
+    private Animator animator;
+    
 
     // 해당 스크립트의 인스턴스가 생성될 때 호출
     private void Awake()
@@ -26,6 +34,7 @@ public class LifeCycle : MonoBehaviour
     void Start()
     {
         Debug.Log("Start() 호출됨");
+        animator = GetComponent<Animator>();
     }
 
     private void FixedUpdate()
@@ -77,17 +86,17 @@ public class LifeCycle : MonoBehaviour
 
 
         // Input Manager의 정의된 사항을 이용하는 방법
-        if (Input.GetButtonDown("Jump"))
-            Debug.Log("점프");
+        //if (Input.GetButtonDown("Jump"))
+        //    Debug.Log("점프");
 
-        if (Input.GetButton("Jump"))
-            Debug.Log("점프를 누르고 있음 ");
+        //if (Input.GetButton("Jump"))
+        //    Debug.Log("점프를 누르고 있음 ");
 
-        if (Input.GetButtonUp("Jump"))
-            Debug.Log("점프 끝");
+        //if (Input.GetButtonUp("Jump"))
+        //    Debug.Log("점프 끝");
 
-        if (Input.GetButtonDown("Skill_Q"))
-            Debug.Log("Q Skill을 사용함");
+        //if (Input.GetButtonDown("Skill_Q"))
+        //    Debug.Log("Q Skill을 사용함");
 
         // 물리 엔진을 적용한 자연스러운 움직임 
         //float x_pos = Input.GetAxis("Horizontal");
@@ -96,11 +105,11 @@ public class LifeCycle : MonoBehaviour
         // 일반적인 딱딱한 움직임(컨트롤이 편함)
         //float offset_x = Input.GetAxisRaw("Horizontal");
         float offset_x = Input.GetAxis("Horizontal");
-        Debug.Log(offset_x);
+        //Debug.Log(offset_x);
 
         float offset_y = Input.GetAxis("Vertical");
         //float offset_y = Input.GetAxisRaw("Vertical");
-        Debug.Log(offset_y);
+        //Debug.Log(offset_y);
 
         // 이동해야되는 Offset( 이동 거리 )
         Vector3 moveOffset = new Vector3(offset_x, offset_y, 0f);
@@ -109,13 +118,52 @@ public class LifeCycle : MonoBehaviour
         new_position = transform.position;   // 현재 좌표 
         new_position += moveOffset * speed * Time.deltaTime; // offset을 더한 새로운 좌표
 
-        Debug.Log(new_position);
+        //Debug.Log(new_position);
 
         new_position.x = Mathf.Clamp(new_position.x, -8.3f, 8.3f);
         new_position.y = Mathf.Clamp(new_position.y, -4.46f, 4.46f);
 
         transform.position = new_position;
+
+
+
+        // shoot
+        if (Input.GetButton("Jump"))
+        {            
+            // 총알발사 애니메이션
+            animator.SetTrigger("fire");
+            Shoot();
+        }
+
     }
+
+    private void Shoot()
+    {
+        if ( Time.time - lastShootTime > shootIntv )
+        {
+            Instantiate(bullet, shootTransform.position, Quaternion.identity);
+            lastShootTime = Time.time;
+        }        
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        Debug.Log("충돌 발!!!");
+
+        if ( collision.gameObject.tag == "Coin" )
+        {
+            //
+            Debug.Log("Coin획득");
+            Destroy(collision.gameObject);
+        }
+        else if ( collision.gameObject.tag == "Enemy" )
+        {
+            Debug.Log("Enemy에 충돌!!!");
+            animator.SetTrigger("die");
+        }
+    }
+
+
 
     private void LateUpdate()
     {
